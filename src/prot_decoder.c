@@ -128,7 +128,6 @@ void decoder( const uint8_t byte ){
 			break;
 
 		case PROT_BYTE1:
-			//printf("PROT_BYTE1\n");
 			if(byte==HEADER_B1){
 				p.b1 = byte;
 				data_bytes_indx = 0;
@@ -139,7 +138,6 @@ void decoder( const uint8_t byte ){
 			break;
 
 		case PROT_BYTE2:
-			//printf("PROT_BYTE2\n");
 			if(byte==HEADER_B2){
 				p.b2 = byte;
 				prstate = PROT_PACKET_TYPE;
@@ -149,49 +147,41 @@ void decoder( const uint8_t byte ){
 			break;
 
 		case PROT_PACKET_TYPE:
-			//printf("PROT_PACKET_TYPE\n");
 			p.type = byte;
 			prstate = PROT_DATA_COUNT;
 			break;
 
 		case PROT_DATA_COUNT:
-			//printf("PROT_DATA_COUNT\n");
 			p.data_cnt = byte;
 			prstate = PROT_ANGLE_START_B1;
 			break;
 
 		case PROT_ANGLE_START_B1:
-			//printf("PROT_ANGLE_START_B1\n");
 			p.angle_start = byte;
 			prstate = PROT_ANGLE_START_B2;
 			break;
 
 		case PROT_ANGLE_START_B2:
-			//printf("PROT_ANGLE_START_B2\n");
 			p.angle_start = (uint16_t)(( ((uint16_t)byte) << 8) + p.angle_start);
 			prstate = PROT_ANGLE_STOP_B1;
 			break;
 
 		case PROT_ANGLE_STOP_B1:
-			//printf("PROT_ANGLE_STOP_B1\n");
 			p.angle_stop = byte;
 			prstate = PROT_ANGLE_STOP_B2;
 			break;
 
 		case PROT_ANGLE_STOP_B2:
-			//printf("PROT_ANGLE_STOP_B2\n");
 			p.angle_stop = (uint16_t)(( ((uint16_t)byte) << 8) + p.angle_stop);
 			prstate = PROT_UNKNOWN_DATA_B1;
 			break;
 
 		case PROT_UNKNOWN_DATA_B1:
-			//printf("PROT_UNKNOWN_DATA_B1\n");
 			p.unknown_data_b1 = byte;
 			prstate = PROT_UNKNOWN_DATA_B2;
 			break;
 
 		case PROT_UNKNOWN_DATA_B2:
-			//printf("PROT_UNKNOWN_DATA_B2\n");
 			p.unknown_data_b2 = byte;
 			prstate = PROT_READ_DATA;
 			break;
