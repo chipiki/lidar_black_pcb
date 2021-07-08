@@ -8,11 +8,16 @@
 
 #include "prot_decoder.h"
 
+#define M_PI		3.14159265358979323846
+// #define M_PIl          3.141592653589793238462643383279502884L
+
 #define HEADER_B1			(uint8_t)0xAA
 #define HEADER_B2			(uint8_t)0x55
 
 #define DATA_PACKET_TYPE	(uint8_t)0x28
 #define MAX_DATA_RECORDS	(uint8_t)0x28
+
+#define STEP	( -M_PI * 2.0 )
 
 typedef enum {
 	PROT_INIT = 0,
@@ -46,6 +51,11 @@ typedef struct __attribute__((packed)) {
 	data_rec_t data[MAX_DATA_RECORDS];		// Data fields
 } packet_t;
 
+typedef struct __attribute__((packed)) {
+	float	angle;
+	float	distance;
+} angle_dist_t ;
+
 
 // State of protocol
 pr_state_t prstate = PROT_INIT;
@@ -62,7 +72,8 @@ uint8_t data_mess_indx = 0;
 // Index of byte inside of measurement
 uint8_t mess_bytes_indx = 0;
 
-uint8_t prev_byte = 0;
+// Angles and distances
+angle_dist_t ad[MAX_DATA_RECORDS] = {0};
 
 void init_prot(){
 	p.b1 = 0;
@@ -116,6 +127,35 @@ void print_packet( void ){
 		printf( "[%d]\t%d\t%d\n", i, p.data[i].quality, p.data[i].distance );
 	}
 }
+
+void calculete_angles(){
+
+	uint16_t diff = 0;
+	float angle_per_sample = 0.0;
+	float angle = 0.0;
+	float anglef = 0.0;
+
+	diff = p.angle_stop - p.angle_start;
+	if( p.angle_stop < p.angle_start ){
+		diff = (uint16_t)0xB400 - p.angle_start + p.angle_stop;
+	}
+
+	if (diff > 1){
+		angle_per_sample = (float)diff / (float)( p.data_cnt - 1);
+	}
+
+	for (int i = 0; i < p.data_cnt ; i++){
+		angle = (p.angle_start + angle_per_sample * i);
+		anglef = STEP * (angle / 0xB400) ;
+
+		ad[i].angle = anglef;
+		ad[i].distance = p.data[i].distance / 1000.0;
+
+		printf("%.6f;%.6f\n", ad[i].angle, ad[i].distance );
+	}
+
+}
+
 
 
 void decoder( const uint8_t byte ){
@@ -191,7 +231,8 @@ void decoder( const uint8_t byte ){
 			process_data( byte );
 
 			if ( (data_mess_indx + 1) == p.data_cnt ){
-				print_packet();
+				//print_packet();
+				calculete_angles();
 				prstate = PROT_BYTE1;
 			}
 			break;
